@@ -1,0 +1,147 @@
+<Window x:Class="EKIPPP.Windows.ActivationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EKIPPP – Activation"
+        Width="480" Height="420"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+
+    <Border CornerRadius="20" ClipToBounds="False">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="50" ShadowDepth="0" Color="#7C3AED" Opacity="0.35"/>
+        </Border.Effect>
+        <Border CornerRadius="20" ClipToBounds="True">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#07070F" Offset="0"/>
+                    <GradientStop Color="#0A0A18" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border BorderBrush="#18183A" BorderThickness="1" CornerRadius="20">
+                <Grid>
+                    <!-- Ambient glow -->
+                    <Ellipse Width="400" Height="300" Opacity="0.06" IsHitTestVisible="False"
+                             HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-50,0,0">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#7C3AED" Offset="0"/>
+                                <GradientStop Color="Transparent" Offset="1"/>
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+
+                    <!-- Close button -->
+                    <Button Click="CloseClick" Width="32" Height="32"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,12,12,0" Cursor="Hand" BorderThickness="0" Background="Transparent">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" CornerRadius="8" Background="Transparent">
+                                    <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                               Foreground="#555580" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="#C42B1C"/>
+                                        <Setter TargetName="Bd" Property="TextBlock.Foreground" Value="White"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- Content -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Margin="48,32,48,32">
+
+                        <!-- Logo icon -->
+                        <Border Width="68" Height="68" CornerRadius="20" HorizontalAlignment="Center" Margin="0,0,0,18">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#7C3AED" Offset="0"/>
+                                    <GradientStop Color="#3B0DA8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="24" ShadowDepth="0" Color="#7C3AED" Opacity="0.9"/>
+                            </Border.Effect>
+                            <TextBlock Text="E" FontSize="32" FontWeight="Black" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       FontFamily="Segoe UI"/>
+                        </Border>
+
+                        <!-- Title -->
+                        <TextBlock Text="EKIPPP" FontSize="26" FontWeight="Black"
+                                   Foreground="White" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                        <TextBlock Text="Entrez votre clé de licence pour activer l'application."
+                                   FontSize="12" Foreground="#7070A0" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" Margin="0,0,0,24"/>
+
+                        <!-- Key input -->
+                        <Border CornerRadius="10" BorderBrush="#22224A" BorderThickness="1"
+                                Background="#0D0D20" Margin="0,0,0,10">
+                            <TextBox x:Name="KeyInput"
+                                     FontSize="15" FontWeight="Bold" FontFamily="Consolas"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                     MaxLength="19" Padding="14,12"
+                                     Foreground="White" Background="Transparent"
+                                     BorderThickness="0" CaretBrush="#7C3AED"
+                                     TextChanged="KeyInput_TextChanged"/>
+                        </Border>
+
+                        <!-- Error -->
+                        <TextBlock x:Name="ErrorText" FontSize="11" FontFamily="Segoe UI"
+                                   Foreground="#EF4444" HorizontalAlignment="Center"
+                                   TextAlignment="Center" TextWrapping="Wrap"
+                                   Visibility="Collapsed" Margin="0,0,0,10"/>
+
+                        <!-- Activate button -->
+                        <Button x:Name="ActivateBtn" Click="ActivateClick"
+                                Height="44" Margin="0,4,0,0" Cursor="Hand" BorderThickness="0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" CornerRadius="10">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#7C3AED" Offset="0"/>
+                                                <GradientStop Color="#A855F7" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="Bd" Property="Opacity" Value="0.72"/>
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock x:Name="BtnLabel" Text="ACTIVER LA LICENCE"
+                                       FontSize="13" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                        </Button>
+
+                        <!-- Discord link -->
+                        <TextBlock HorizontalAlignment="Center" FontSize="11"
+                                   FontFamily="Segoe UI" Margin="0,18,0,0">
+                            <Run Text="Besoin d'aide ? " Foreground="#55558A"/>
+                            <Hyperlink NavigateUri="https://discord.gg/YUKQRUj9Qs"
+                                       RequestNavigate="DiscordLink_RequestNavigate"
+                                       Foreground="#7C3AED" TextDecorations="None">
+                                Rejoins le Discord
+                            </Hyperlink>
+                        </TextBlock>
+
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Border>
+    </Border>
+</Window>

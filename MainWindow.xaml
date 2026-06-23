@@ -1,0 +1,1778 @@
+<Window x:Class="EKIPPP.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:EKIPPP.ViewModels"
+        xmlns:conv="clr-namespace:EKIPPP.Converters"
+        xmlns:helpers="clr-namespace:EKIPPP.Helpers"
+        Title="EKIPPP"
+        Width="1100" Height="700"
+        MinWidth="900" MinHeight="580"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        RenderOptions.ClearTypeHint="Enabled"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.DataContext><vm:MainViewModel/></Window.DataContext>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5"  Command="{Binding RefreshStatsCommand}"/>
+        <KeyBinding Key="L"   Modifiers="Control" Command="{Binding LaunchFiveMCommand}"/>
+        <KeyBinding Key="D1"  Modifiers="Control" Command="{Binding SelectTabCommand}" CommandParameter="0"/>
+        <KeyBinding Key="D2"  Modifiers="Control" Command="{Binding SelectTabCommand}" CommandParameter="1"/>
+        <KeyBinding Key="D3"  Modifiers="Control" Command="{Binding SelectTabCommand}" CommandParameter="2"/>
+        <KeyBinding Key="D4"  Modifiers="Control" Command="{Binding SelectTabCommand}" CommandParameter="3"/>
+        <KeyBinding Key="D5"  Modifiers="Control" Command="{Binding SelectTabCommand}" CommandParameter="4"/>
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+        <conv:InverseBoolConverter      x:Key="InvBool"/>
+        <conv:LogTypeToColorConverter   x:Key="LogColor"/>
+        <conv:TabVisibilityConverter    x:Key="TabVis"/>
+    </Window.Resources>
+
+    <!-- Root border -->
+    <Border x:Name="RootBorder" CornerRadius="16" ClipToBounds="True">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#07070F" Offset="0"/>
+                <GradientStop Color="#0A0A16" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="58"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>
+
+            <!-- Ambient glows -->
+            <Ellipse Grid.Row="0" Grid.RowSpan="3" Width="600" Height="400" Opacity="0.04"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-100,-80,0,0"
+                     IsHitTestVisible="False">
+                <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#7C3AED" Offset="0"/><GradientStop Color="Transparent" Offset="1"/></RadialGradientBrush></Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Grid.Row="0" Grid.RowSpan="3" Width="400" Height="400" Opacity="0.035"
+                     HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-80,-60"
+                     IsHitTestVisible="False">
+                <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#5B21B6" Offset="0"/><GradientStop Color="Transparent" Offset="1"/></RadialGradientBrush></Ellipse.Fill>
+            </Ellipse>
+
+            <!-- ══ TITLE BAR ════════════════════════════════════════════ -->
+            <Grid Grid.Row="0" PreviewMouseLeftButtonDown="TitleBar_MouseDown"
+                  MouseLeftButtonDown="TitleBar_DoubleClick" Background="Transparent">
+                <Border BorderBrush="#14142A" BorderThickness="0,0,0,1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#0B0B19" Offset="0"/>
+                            <GradientStop Color="#09091A" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Grid Margin="0,0,16,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                            <!-- Icône fallback (disparaît si logo.png existe) -->
+                            <Border x:Name="TitleLogoFallback" Width="44" Height="44" CornerRadius="13">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#7C3AED" Offset="0"/>
+                                        <GradientStop Color="#3B0DA8" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="22" ShadowDepth="0" Color="#7C3AED" Opacity="0.85"/>
+                                </Border.Effect>
+                                <TextBlock Text="E" FontSize="23" FontWeight="Black" Foreground="White"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontFamily="Segoe UI"/>
+                            </Border>
+                            <!-- Logo image (affiché si logo.png existe) -->
+                            <Image x:Name="TitleLogoImage" Height="44" Width="44"
+                                   VerticalAlignment="Center" Visibility="Collapsed"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Stretch="Uniform"/>
+                            <!-- Nom de l'app — toujours visible -->
+                            <StackPanel VerticalAlignment="Center" helpers:PanelSpacing.Spacing="2"
+                                        Margin="14,0,0,0">
+                                <TextBlock Text="EKIPPP" FontSize="21" FontWeight="Black"
+                                           FontFamily="Segoe UI" Foreground="White"/>
+                                <TextBlock Text="OPTIMISEUR FIVEM" FontSize="9" FontWeight="Bold"
+                                           Foreground="#7C3AED" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Boutons chrome — icônes MDL2, pleine hauteur -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                    VerticalAlignment="Stretch">
+                            <!-- Minimize -->
+                            <Button Click="MinimizeClick" Width="46" Height="58" Cursor="Hand"
+                                    BorderThickness="0" Background="Transparent">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd" Background="Transparent">
+                                            <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                                       Foreground="#9090B8"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#22FFFFFF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#10FFFFFF"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <!-- Maximize -->
+                            <Button x:Name="MaximizeButton" Click="MaximizeClick" Width="46" Height="58" Cursor="Hand"
+                                    BorderThickness="0" Background="Transparent">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd" Background="Transparent">
+                                            <TextBlock x:Name="MaxIco" Text="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                                       Foreground="#9090B8"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#22FFFFFF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#10FFFFFF"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <!-- Close -->
+                            <Button Click="CloseClick" Width="46" Height="58" Cursor="Hand"
+                                    BorderThickness="0" Background="Transparent">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd" Background="Transparent">
+                                            <TextBlock x:Name="Ico" Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                                       Foreground="#9090B8"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#C42B1C"/>
+                                                <Setter TargetName="Ico" Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#9A1B0F"/>
+                                                <Setter TargetName="Ico" Property="Foreground" Value="#DDDDDD"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ══ SIDEBAR + CONTENT ════════════════════════════════════ -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="210"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ── Sidebar ────────────────────────────────────────── -->
+                <Border Grid.Column="0" Background="{StaticResource SidebarBg}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="NAVIGATION"
+                                   FontSize="9" FontWeight="Bold" FontFamily="Segoe UI"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="20,18,20,10"/>
+
+                        <!-- ── Nav items ── -->
+                        <StackPanel DockPanel.Dock="Top">
+
+                            <!-- Tab 0: Tableau de bord -->
+                            <Border Cursor="Hand" Height="46">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectTabCommand}" CommandParameter="0"/>
+                                </Border.InputBindings>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTab0Active}" Value="True">
+                                                <Setter Property="Background" Value="#0F0F20"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#0C0C1C"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Rectangle Width="3" HorizontalAlignment="Left" RadiusX="2" RadiusY="2"
+                                               RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform><ScaleTransform/></Rectangle.RenderTransform>
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTab0Active}" Value="True">
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                     From="0.1" To="1" Duration="0:0:0.28">
+                                                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                                                    </DoubleAnimation>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#A855F7" Offset="0"/>
+                                                <GradientStop Color="#7C3AED" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,16,0" VerticalAlignment="Center"
+                                                helpers:PanelSpacing.Spacing="12">
+                                        <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="15">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Opacity" Value="0.75"/>
+                                                    <Style.Triggers><DataTrigger Binding="{Binding IsTab0Active}" Value="True"><Setter Property="Opacity" Value="1"/></DataTrigger></Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Tableau de bord" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#9090C0"/>
+                                                    <Style.Triggers><DataTrigger Binding="{Binding IsTab0Active}" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></DataTrigger></Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Tab 1: Nettoyage -->
+                            <Border Cursor="Hand" Height="46">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectTabCommand}" CommandParameter="1"/>
+                                </Border.InputBindings>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTab1Active}" Value="True"><Setter Property="Background" Value="#0F0F20"/></DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#0C0C1C"/></Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Rectangle Width="3" HorizontalAlignment="Left" RadiusX="2" RadiusY="2"
+                                               RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform><ScaleTransform/></Rectangle.RenderTransform>
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTab1Active}" Value="True">
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                     From="0.1" To="1" Duration="0:0:0.28">
+                                                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                                                    </DoubleAnimation>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                        <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#A855F7" Offset="0"/><GradientStop Color="#7C3AED" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                                    </Rectangle>
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,16,0" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="12">
+                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="15">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Opacity" Value="0.75"/><Style.Triggers><DataTrigger Binding="{Binding IsTab1Active}" Value="True"><Setter Property="Opacity" Value="1"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Nettoyage" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="#9090C0"/><Style.Triggers><DataTrigger Binding="{Binding IsTab1Active}" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Tab 2: Installation -->
+                            <Border Cursor="Hand" Height="46">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectTabCommand}" CommandParameter="2"/>
+                                </Border.InputBindings>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTab2Active}" Value="True"><Setter Property="Background" Value="#0F0F20"/></DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#0C0C1C"/></Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Rectangle Width="3" HorizontalAlignment="Left" RadiusX="2" RadiusY="2"
+                                               RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform><ScaleTransform/></Rectangle.RenderTransform>
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTab2Active}" Value="True">
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                     From="0.1" To="1" Duration="0:0:0.28">
+                                                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                                                    </DoubleAnimation>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                        <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#A855F7" Offset="0"/><GradientStop Color="#7C3AED" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                                    </Rectangle>
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,16,0" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="12">
+                                        <TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="15">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Opacity" Value="0.75"/><Style.Triggers><DataTrigger Binding="{Binding IsTab2Active}" Value="True"><Setter Property="Opacity" Value="1"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Installation" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="#9090C0"/><Style.Triggers><DataTrigger Binding="{Binding IsTab2Active}" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Tab 3: Sauvegarde -->
+                            <Border Cursor="Hand" Height="46">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectTabCommand}" CommandParameter="3"/>
+                                </Border.InputBindings>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTab3Active}" Value="True"><Setter Property="Background" Value="#0F0F20"/></DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#0C0C1C"/></Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Rectangle Width="3" HorizontalAlignment="Left" RadiusX="2" RadiusY="2"
+                                               RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform><ScaleTransform/></Rectangle.RenderTransform>
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTab3Active}" Value="True">
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                     From="0.1" To="1" Duration="0:0:0.28">
+                                                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                                                    </DoubleAnimation>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                        <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#A855F7" Offset="0"/><GradientStop Color="#7C3AED" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                                    </Rectangle>
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,16,0" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="12">
+                                        <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="15">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Opacity" Value="0.75"/><Style.Triggers><DataTrigger Binding="{Binding IsTab3Active}" Value="True"><Setter Property="Opacity" Value="1"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Sauvegarde" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="#9090C0"/><Style.Triggers><DataTrigger Binding="{Binding IsTab3Active}" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Tab 4: Paramètres -->
+                            <Border Cursor="Hand" Height="46">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding SelectTabCommand}" CommandParameter="4"/>
+                                </Border.InputBindings>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTab4Active}" Value="True"><Setter Property="Background" Value="#0F0F20"/></DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#0C0C1C"/></Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Rectangle Width="3" HorizontalAlignment="Left" RadiusX="2" RadiusY="2"
+                                               RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform><ScaleTransform/></Rectangle.RenderTransform>
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTab4Active}" Value="True">
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                     From="0.1" To="1" Duration="0:0:0.28">
+                                                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                                                    </DoubleAnimation>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                        <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#A855F7" Offset="0"/><GradientStop Color="#7C3AED" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                                    </Rectangle>
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,16,0" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="12">
+                                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="15">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Opacity" Value="0.75"/><Style.Triggers><DataTrigger Binding="{Binding IsTab4Active}" Value="True"><Setter Property="Opacity" Value="1"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="Paramètres" FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="#9090C0"/><Style.Triggers><DataTrigger Binding="{Binding IsTab4Active}" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                        </StackPanel>
+
+                        <!-- Bottom: version + days used -->
+                        <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,12">
+                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="6">
+                                <TextBlock Text="v1.0" FontSize="10"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           FontFamily="Segoe UI"/>
+                                <TextBlock Text="·" FontSize="10" Foreground="#44445A"/>
+                                <TextBlock FontSize="10" FontFamily="Segoe UI">
+                                    <Run Text="{Binding DaysUsedDisplay}" Foreground="#7C3AED" FontWeight="Bold"/>
+                                    <Run Text=" utilisé" Foreground="#8888AA"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- FiveM live indicator -->
+                        <Border DockPanel.Dock="Bottom" Margin="14,0,14,10" CornerRadius="10" Padding="12,9">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#1A0A0A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FiveMRunning}" Value="True">
+                                            <Setter Property="Background" Value="#0A1A12"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,9,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#EF4444"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding FiveMRunning}" Value="True">
+                                                    <Setter Property="Fill" Value="#10B981"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock FontSize="12" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="FiveM fermé"/>
+                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding FiveMRunning}" Value="True">
+                                                    <Setter Property="Text" Value="FiveM actif"/>
+                                                    <Setter Property="Foreground" Value="#10B981"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </DockPanel>
+                </Border>
+
+                <Rectangle Grid.Column="1" Fill="#12122A"/>
+
+                <!-- ── Content Area ────────────────────────────────────── -->
+                <Border Grid.Column="2" Background="{StaticResource ContentBg}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Bannière mise à jour -->
+                        <Border Grid.Row="0"
+                                Background="#071A10" BorderBrush="#14532D" BorderThickness="0,0,0,1"
+                                Padding="22,10"
+                                Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolVis}}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            helpers:PanelSpacing.Spacing="12">
+                                    <TextBlock Text="&#xE930;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               Foreground="#10B981" VerticalAlignment="Center"/>
+                                    <StackPanel VerticalAlignment="Center" helpers:PanelSpacing.Spacing="2">
+                                        <TextBlock FontSize="12" FontWeight="Bold" Foreground="#10B981" FontFamily="Segoe UI">
+                                            <Run Text="Mise à jour v"/><Run Text="{Binding UpdateVersion}"/><Run Text=" disponible !"/>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding UpdateChangelog}" FontSize="11"
+                                                   Foreground="#6EE7B7" FontFamily="Segoe UI"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            VerticalAlignment="Center" helpers:PanelSpacing.Spacing="8">
+                                    <Button Content="TÉLÉCHARGER" Style="{StaticResource PrimaryButton}"
+                                            Padding="12,6" FontSize="11"
+                                            Command="{Binding OpenUpdateUrlCommand}"/>
+                                    <Button Style="{StaticResource ActionButton}" Padding="8,6" FontSize="11"
+                                            ToolTip="Ignorer" Command="{Binding DismissUpdateCommand}">
+                                        <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#9090B8"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- ╔══ TAB 0: Tableau de bord ══════════════════╗ -->
+                        <ScrollViewer Grid.Row="1" x:Name="Tab0Panel" Visibility="Visible"
+                                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <StackPanel Margin="32,28,32,20" helpers:PanelSpacing.Spacing="22">
+                                <StackPanel helpers:PanelSpacing.Spacing="4">
+                                    <TextBlock Text="Tableau de bord" FontSize="22" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                    <TextBlock Text="Vue d'ensemble de votre installation FiveM."
+                                               FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                </StackPanel>
+
+                                <!-- Banner FiveM non installé -->
+                                <Border CornerRadius="12" Padding="18,14" Background="#1A110A" BorderBrush="#4A2800" BorderThickness="1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding FiveMDetected}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="14">
+                                        <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                                   Foreground="#F59E0B" VerticalAlignment="Center"/>
+                                        <StackPanel VerticalAlignment="Center" helpers:PanelSpacing.Spacing="2">
+                                            <TextBlock Text="FiveM introuvable sur ce PC" FontSize="13" FontWeight="Bold"
+                                                       Foreground="#F59E0B" FontFamily="Segoe UI"/>
+                                            <TextBlock FontSize="11" Foreground="#C8873A" FontFamily="Segoe UI"
+                                                       Text="Installez FiveM puis relancez EKIPPP pour accéder à toutes les fonctionnalités."/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Stats FiveM row -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="CACHE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding CacheSizeDisplay}" FontSize="28" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="FiveM.app\data" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Consolas"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="LOGS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding LogFileCount}" FontSize="28" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="FiveM.app\logs" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Consolas"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Grid.Column="4" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="CRASHES" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding CrashFileCount}" FontSize="28" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="FiveM.app\crashes" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Consolas"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE945;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Grid.Column="6" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="MODS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding ModsFileCount}" FontSize="28" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding ModsSizeDisplay}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Stats PC row -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- CPU -->
+                                    <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="CPU" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding CpuDisplay}" FontSize="28" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <ProgressBar Style="{StaticResource MiniProgressBar}"
+                                                             Value="{Binding CpuPercent}" Maximum="100"/>
+                                                <TextBlock Text="Utilisation processeur" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <!-- RAM -->
+                                    <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="RAM" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding RamDisplay}" FontSize="18" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <ProgressBar Style="{StaticResource MiniProgressBar}"
+                                                             Value="{Binding RamPercent}" Maximum="100"/>
+                                                <TextBlock Text="Mémoire utilisée" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE9E9;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <!-- DISQUE -->
+                                    <Border Grid.Column="4" Style="{StaticResource StatCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="4">
+                                                <TextBlock Text="DISQUE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="{Binding DiskDisplay}" FontSize="18" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="Espace disponible" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="&#xE958;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="22" Opacity="0.85" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Cumulative stats row -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                                        <StackPanel helpers:PanelSpacing.Spacing="4">
+                                            <TextBlock Text="TOTAL LIBÉRÉ" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="{Binding TotalFreedDisplay}" FontSize="24" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="Tous nettoyages confondus" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                                        <StackPanel helpers:PanelSpacing.Spacing="4">
+                                            <TextBlock Text="NETTOYAGES" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="{Binding TotalCleanCount}" FontSize="28" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="Nettoyages effectués" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="4" Style="{StaticResource StatCard}">
+                                        <StackPanel helpers:PanelSpacing.Spacing="4">
+                                            <TextBlock Text="VERSION FIVEM" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="{Binding FiveMVersion}" FontSize="16" FontWeight="Bold" Foreground="White" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="Version installée" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Journal + Quick actions -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="240"/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Journal -->
+                                    <Border Grid.Column="0" Style="{StaticResource SectionCard}" Padding="22,18">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="12"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <StackPanel Grid.Row="0" Orientation="Horizontal" helpers:PanelSpacing.Spacing="8">
+                                                <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="#7C3AED"/>
+                                                <TextBlock Text="Journal d'activité" FontSize="12" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="160" CanContentScroll="False">
+                                                <ItemsControl ItemsSource="{Binding Logs}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,3">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="14"/>
+                                                                    <ColumnDefinition Width="58"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="10" VerticalAlignment="Center">
+                                                                    <TextBlock.Foreground><Binding Path="Type" Converter="{StaticResource LogColor}"/></TextBlock.Foreground>
+                                                                </TextBlock>
+                                                                <TextBlock Grid.Column="1" Text="{Binding TimeDisplay}" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"
+                                                                           Foreground="{StaticResource TextMutedBrush}" FontFamily="Consolas"/>
+                                                                <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
+                                                                           Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" FontFamily="Segoe UI"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </Border>
+                                    <!-- Quick actions -->
+                                    <Border Grid.Column="2" Style="{StaticResource SectionCard}" Padding="22,18">
+                                        <StackPanel helpers:PanelSpacing.Spacing="10">
+                                            <TextBlock Text="Actions rapides" FontSize="12" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI" Margin="0,0,0,4"/>
+                                            <Button Style="{StaticResource PrimaryButton}"
+                                                    Command="{Binding LaunchFiveMCommand}" Padding="14,10"
+                                                    IsEnabled="{Binding FiveMRunning, Converter={StaticResource InvBool}}">
+                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="8">
+                                                    <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Lancer FiveM" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Style="{StaticResource PrimaryButton}"
+                                                    Command="{Binding RefreshStatsCommand}" Padding="14,10">
+                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="8">
+                                                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Actualiser" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Style="{StaticResource PrimaryButton}"
+                                                    Command="{Binding OpenFiveMFolderCommand}" Padding="14,10">
+                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="8">
+                                                    <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Ouvrir FiveM" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- ╔══ TAB 1: Nettoyage ═════════════════════════╗ -->
+                        <ScrollViewer Grid.Row="1" x:Name="Tab1Panel" Visibility="Collapsed"
+                                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <StackPanel Margin="32,28,32,20" helpers:PanelSpacing.Spacing="16">
+                                <StackPanel helpers:PanelSpacing.Spacing="4">
+                                    <TextBlock Text="Nettoyage" FontSize="22" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                    <TextBlock Text="Libérez de l'espace et optimisez votre installation FiveM."
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                </StackPanel>
+
+                                <Border Style="{StaticResource SectionCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Nettoyage complet" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="data · logs · crashes" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Segoe UI" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Supprime le cache data (sauf game-storage), tous les logs et tous les rapports de crash."/>
+                                            <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI">
+                                                <Run Text="{Binding CacheSizeDisplay, Mode=OneWay}"/> <Run Text="·"/> <Run Text="{Binding LogFileCount, Mode=OneWay}"/> <Run Text="log(s) ·"/> <Run Text="{Binding CrashFileCount, Mode=OneWay}"/> <Run Text="crash(es)"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="NETTOYER TOUT"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding CleanCacheCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <Border Style="{StaticResource SectionCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Supprimer les logs" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="fichiers journaux" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Segoe UI" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Supprime uniquement les fichiers de logs FiveM sans toucher au cache ni aux crashes."/>
+                                            <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI">
+                                                <Run Text="{Binding LogFileCount, Mode=OneWay}"/> <Run Text="fichier(s) dans FiveM.app\logs"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="SUPPRIMER"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding DeleteLogsCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <Border Style="{StaticResource SectionCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Supprimer les crashes" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="rapports de crash" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Segoe UI" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Supprime uniquement les rapports de crash sans toucher au cache ni aux logs."/>
+                                            <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI">
+                                                <Run Text="{Binding CrashFileCount, Mode=OneWay}"/> <Run Text="rapport(s) dans FiveM.app\crashes"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="SUPPRIMER"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding DeleteCrashesCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- ╔══ TAB 2: Installation ══════════════════════╗ -->
+                        <ScrollViewer Grid.Row="1" x:Name="Tab2Panel" Visibility="Collapsed"
+                                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <StackPanel Margin="32,28,32,20" helpers:PanelSpacing.Spacing="16">
+                                <StackPanel helpers:PanelSpacing.Spacing="4">
+                                    <TextBlock Text="Installation" FontSize="22" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                    <TextBlock Text="Installez vos mods et packs directement dans FiveM. Glissez-déposez un fichier sur une carte."
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                </StackPanel>
+
+                                <!-- Astuce glisser-déposer -->
+                                <Border CornerRadius="10" Padding="14,10" Background="#0D0D1F"
+                                        BorderBrush="#2A2A50" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="10">
+                                        <TextBlock Text="&#x26A0;" FontSize="13" Foreground="#F59E0B" VerticalAlignment="Center"/>
+                                        <TextBlock TextWrapping="Wrap" FontSize="11" FontFamily="Segoe UI"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center">
+                                            <Run FontWeight="SemiBold" Foreground="#F59E0B">Glisser-déposer depuis certains dossiers peut ne pas fonctionner.</Run>
+                                            <Run>Si ça bloque, déplacez d'abord le fichier sur le bureau, puis glissez-le depuis là.</Run>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Pack Citizen -->
+                                <Border Style="{StaticResource SectionCard}" Tag="citizen"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Pack Citizen" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="FiveM.app\citizen\" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Sélectionnez le dossier citizen de votre pack ou glissez-le ici. Il sera copié dans FiveM.app\citizen\ en remplaçant les fichiers existants."/>
+                                            <TextBlock Text="Sélection d'un dossier · Glisser-déposer · Merge avec l'existant"
+                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="INSTALLER"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallPackCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Pack Data -->
+                                <Border Style="{StaticResource SectionCard}" Tag="data"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Pack Data" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="citizen\common\data\" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Sélectionnez le dossier data de votre pack ou glissez-le ici. Il sera copié dans citizen\common\data\ en remplaçant les fichiers existants."/>
+                                            <TextBlock Text="Sélection d'un dossier · Glisser-déposer · Merge avec l'existant"
+                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="INSTALLER"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallDataCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Mod .rpf -->
+                                <Border Style="{StaticResource SectionCard}" Tag="rpf"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Mod .rpf" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="FiveM.app\mods\" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Sélectionnez un fichier .rpf à installer ou glissez-le ici. Fonctionne avec OpenIV ou les mods standalone."/>
+                                            <TextBlock Text="Sélection d'un fichier .rpf · Glisser-déposer"
+                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="INSTALLER"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallModCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Pack Sons GTA V -->
+                                <Border Style="{StaticResource SectionCard}" Tag="sounds"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <StackPanel helpers:PanelSpacing.Spacing="12"
+                                                AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop" Tag="sounds">
+                                        <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                            <TextBlock Text="Pack Sons" FontSize="18" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="GTA V · x64\audio\sfx\" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                        <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                   Text="Copie vos fichiers audio dans le dossier sfx de GTA V. Glissez un fichier audio ou utilisez le bouton. Fonctionne avec Steam, Epic et Rockstar."/>
+
+                                        <Border CornerRadius="8" Padding="12,8" Background="#0B0B18"
+                                                AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop" Tag="sounds">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="6"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding GtaVPathDisplay}"
+                                                           FontFamily="Consolas" FontSize="10" FontWeight="Bold"
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding GtaVDetected}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#10B981"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <Button Grid.Column="2" Content="Détecter"
+                                                        Command="{Binding DetectGtaVCommand}"
+                                                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                        Style="{StaticResource PrimaryButton}" Padding="10,6" FontSize="11"/>
+                                                <Button Grid.Column="4" Content="Parcourir…"
+                                                        Command="{Binding BrowseGtaVCommand}"
+                                                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                        Style="{StaticResource PrimaryButton}" Padding="10,6" FontSize="11"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <Button Content="INSTALLER LES SONS"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallSoundPackCommand}"
+                                                IsEnabled="{Binding GtaVDetected}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- BloodFX -->
+                                <Border Style="{StaticResource SectionCard}" Tag="bloodfx"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="160"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="BloodFX" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="citizen\common\data\effects\" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Installez vos fichiers d'effets de sang dans le dossier effects. Le dossier est créé automatiquement s'il n'existe pas. Glissez les fichiers ou utilisez le bouton."/>
+                                            <TextBlock Text="Sélection de fichiers · Glisser-déposer · Création auto du dossier"
+                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="INSTALLER BLOODFX"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallBloodFxCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- KillFX -->
+                                <Border Style="{StaticResource SectionCard}" Tag="killfx"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="160"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="KillFX" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="citizen\common\data\timecycle\" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Installez vos fichiers de timecycle (effets de mort, météo) dans le dossier timecycle. Le dossier est créé automatiquement s'il n'existe pas."/>
+                                            <TextBlock Text="Sélection de fichiers · Glisser-déposer · Création auto du dossier"
+                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="INSTALLER KILLFX"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallKillFxCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Preset ReShade -->
+                                <Border Style="{StaticResource SectionCard}" Tag="reshade"
+                                        AllowDrop="True" DragOver="InstallCard_DragOver" Drop="InstallCard_Drop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="160"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="8">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                                <TextBlock Text="Preset ReShade" FontSize="18" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock Text="FiveM.app\plugins\" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Installez un preset ReShade (.ini) directement dans le dossier plugins de FiveM. ReShade doit être déjà installé. Glissez le fichier .ini ou utilisez le bouton."/>
+                                            <TextBlock Text="Fichier .ini · Glisser-déposer"
+                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="INSTALLER PRESET"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding InstallReShadePresetCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- ── GÉRER LES INSTALLATIONS ── -->
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="4"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Rectangle Grid.Column="0" Fill="{StaticResource AccentBrush}" RadiusX="2" RadiusY="2"/>
+                                    <TextBlock Grid.Column="2" Text="GÉRER LES INSTALLATIONS"
+                                               FontSize="13" FontWeight="Bold" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                    <Button Grid.Column="4" Content="Rafraîchir tout"
+                                            Style="{StaticResource PrimaryButton}" Padding="12,5" FontSize="11"
+                                            Command="{Binding RefreshInstalledPacksCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                </Grid>
+
+                                <!-- Packs RPF installés -->
+                                <Border Style="{StaticResource SectionCard}">
+                                    <StackPanel helpers:PanelSpacing.Spacing="10">
+                                        <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                            <TextBlock Text="Packs RPF installés" FontSize="16" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="mods\ · plugins\" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontFamily="Consolas" VerticalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding InstalledRpfs}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0F0F1A" CornerRadius="6" Padding="12,8" Margin="0,0,0,4">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="80"/>
+                                                                <ColumnDefinition Width="90"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                                       FontFamily="Consolas" FontSize="11" FontWeight="Bold"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}"
+                                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding Location}"
+                                                                       FontFamily="Consolas" FontSize="10"
+                                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                            <Button Grid.Column="4" Content="Supprimer"
+                                                                    Style="{StaticResource DangerButton}"
+                                                                    Padding="10,4" FontSize="11"
+                                                                    Command="{Binding DataContext.DeleteInstalledFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding FilePath}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Aucun pack RPF installé détecté."
+                                                   FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                   FontStyle="Italic" HorizontalAlignment="Center" Margin="0,4">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding InstalledRpfs.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- BloodFX installés -->
+                                <Border Style="{StaticResource SectionCard}">
+                                    <StackPanel helpers:PanelSpacing.Spacing="10">
+                                        <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                            <TextBlock Text="BloodFX installés" FontSize="16" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="citizen\common\data\effects\" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontFamily="Consolas" VerticalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding InstalledBloodFx}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0F0F1A" CornerRadius="6" Padding="12,8" Margin="0,0,0,4">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="80"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                                       FontFamily="Consolas" FontSize="11" FontWeight="Bold"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}"
+                                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                            <Button Grid.Column="3" Content="Supprimer"
+                                                                    Style="{StaticResource DangerButton}"
+                                                                    Padding="10,4" FontSize="11"
+                                                                    Command="{Binding DataContext.DeleteInstalledFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding FilePath}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Aucun fichier BloodFX installé détecté."
+                                                   FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                   FontStyle="Italic" HorizontalAlignment="Center" Margin="0,4">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding InstalledBloodFx.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- KillFX installés -->
+                                <Border Style="{StaticResource SectionCard}">
+                                    <StackPanel helpers:PanelSpacing.Spacing="10">
+                                        <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                            <TextBlock Text="KillFX installés" FontSize="16" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="citizen\common\data\timecycle\" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontFamily="Consolas" VerticalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding InstalledKillFx}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0F0F1A" CornerRadius="6" Padding="12,8" Margin="0,0,0,4">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="80"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                                       FontFamily="Consolas" FontSize="11" FontWeight="Bold"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}"
+                                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                            <Button Grid.Column="3" Content="Supprimer"
+                                                                    Style="{StaticResource DangerButton}"
+                                                                    Padding="10,4" FontSize="11"
+                                                                    Command="{Binding DataContext.DeleteInstalledFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding FilePath}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Aucun fichier KillFX installé détecté."
+                                                   FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                   FontStyle="Italic" HorizontalAlignment="Center" Margin="0,4">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding InstalledKillFx.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Pack Sons installés -->
+                                <Border Style="{StaticResource SectionCard}">
+                                    <StackPanel helpers:PanelSpacing.Spacing="10">
+                                        <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="12">
+                                            <TextBlock Text="Pack Sons installés" FontSize="16" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="GTA V · x64\audio\sfx\" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontFamily="Consolas" VerticalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding InstalledSounds}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0F0F1A" CornerRadius="6" Padding="12,8" Margin="0,0,0,4">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="80"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                                       FontFamily="Consolas" FontSize="11" FontWeight="Bold"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}"
+                                                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                            <Button Grid.Column="3" Content="Supprimer"
+                                                                    Style="{StaticResource DangerButton}"
+                                                                    Padding="10,4" FontSize="11"
+                                                                    Command="{Binding DataContext.DeleteInstalledFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding FilePath}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Aucun pack sons installé via EKIPPP."
+                                                   FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                   FontStyle="Italic" HorizontalAlignment="Center" Margin="0,4">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding InstalledSounds.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- ╔══ TAB 3: Sauvegarde ════════════════════════╗ -->
+                        <ScrollViewer Grid.Row="1" x:Name="Tab3Panel" Visibility="Collapsed"
+                                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <StackPanel Margin="32,28,32,20" helpers:PanelSpacing.Spacing="16">
+                                <StackPanel helpers:PanelSpacing.Spacing="4">
+                                    <TextBlock Text="Sauvegarde" FontSize="22" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                    <TextBlock Text="Créez et restaurez des sauvegardes complètes de votre installation FiveM."
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                </StackPanel>
+
+                                <!-- Actions -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Créer -->
+                                    <Border Grid.Column="0" Style="{StaticResource SectionCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="8">
+                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="10">
+                                                    <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#A855F7" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Créer une sauvegarde" FontSize="16" FontWeight="Bold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                </StackPanel>
+                                                <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                           Text="Crée une archive ZIP complète de FiveM.app, sauvegardée dans vos Documents."/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="CRÉER"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Command="{Binding CreateBackupCommand}"
+                                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Restaurer depuis fichier -->
+                                    <Border Grid.Column="2" Style="{StaticResource SectionCard}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel helpers:PanelSpacing.Spacing="8">
+                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="10">
+                                                    <TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#A855F7" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Ouvrir le dossier" FontSize="16" FontWeight="Bold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                                </StackPanel>
+                                                <TextBlock TextWrapping="Wrap" FontSize="12" LineHeight="20" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                           Text="Ouvre le dossier contenant toutes vos sauvegardes dans l'explorateur Windows."/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="OUVRIR"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Command="{Binding OpenBackupsFolderCommand}"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Liste des sauvegardes -->
+                                <Border Style="{StaticResource SectionCard}">
+                                    <StackPanel helpers:PanelSpacing.Spacing="14">
+                                        <!-- Header -->
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="8">
+                                                <Ellipse Width="6" Height="6" Fill="#7C3AED" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Sauvegardes existantes" FontSize="13" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                            <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                    Style="{StaticResource ActionButton}" Padding="10,6" FontSize="11"
+                                                    Command="{Binding RefreshBackupsCommand}">
+                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="6">
+                                                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Rafraîchir" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+
+                                        <!-- Backups list -->
+                                        <ItemsControl ItemsSource="{Binding Backups}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0D0D1C" CornerRadius="10" Padding="16,12" Margin="0,0,0,6">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="&#xE896;" FontFamily="Segoe MDL2 Assets"
+                                                                       FontSize="20" Foreground="#7C3AED" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="2">
+                                                                <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold"
+                                                                           Foreground="White" FontFamily="Segoe UI"
+                                                                           TextTrimming="CharacterEllipsis"/>
+                                                                <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="8">
+                                                                    <TextBlock Text="{Binding DateDisplay}" FontSize="10"
+                                                                               Foreground="#8888AA" FontFamily="Segoe UI"/>
+                                                                    <TextBlock Text="·" FontSize="10" Foreground="#44445A"/>
+                                                                    <TextBlock Text="{Binding SizeDisplay}" FontSize="10"
+                                                                               Foreground="#A855F7" FontFamily="Segoe UI" FontWeight="Bold"/>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                                        VerticalAlignment="Center" helpers:PanelSpacing.Spacing="6">
+                                                                <Button Content="Restaurer" Style="{StaticResource PrimaryButton}"
+                                                                        Padding="10,6" FontSize="11"
+                                                                        Command="{Binding DataContext.RestoreSelectedBackupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        CommandParameter="{Binding FilePath}"/>
+                                                                <Button Style="{StaticResource ActionButton}" Padding="8,6" FontSize="11"
+                                                                        ToolTip="Supprimer cette sauvegarde"
+                                                                        Command="{Binding DataContext.DeleteBackupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        CommandParameter="{Binding FilePath}">
+                                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#EF4444"/>
+                                                                </Button>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Empty state -->
+                                        <TextBlock Text="Aucune sauvegarde trouvée. Créez-en une !"
+                                                   FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"
+                                                   HorizontalAlignment="Center" Margin="0,10">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Backups.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- ╔══ TAB 4: Paramètres ════════════════════════════╗ -->
+                        <ScrollViewer Grid.Row="1" x:Name="Tab4Panel" Visibility="Collapsed"
+                                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <StackPanel Margin="32,28,32,20" helpers:PanelSpacing.Spacing="16">
+                                <StackPanel helpers:PanelSpacing.Spacing="4">
+                                    <TextBlock Text="Paramètres" FontSize="22" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                    <TextBlock Text="Configurez le comportement d'EKIPPP."
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                </StackPanel>
+
+                                <!-- À propos -->
+                                <Border Style="{StaticResource SectionCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="52" Height="52" CornerRadius="14" Margin="0,0,18,0"
+                                                ClipToBounds="True">
+                                            <Image Source="pack://application:,,,/Assets/logo.png"
+                                                   Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="4">
+                                            <StackPanel Orientation="Horizontal" helpers:PanelSpacing.Spacing="8">
+                                                <TextBlock Text="EKIPPP" FontSize="18" FontWeight="Black"
+                                                           Foreground="White" FontFamily="Segoe UI"/>
+                                                <Border Background="#2A1A50" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
+                                                    <TextBlock Text="v1.0" FontSize="10" FontWeight="Bold"
+                                                               Foreground="#A855F7" FontFamily="Segoe UI"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Optimiseur FiveM · Fait avec passion"
+                                                       FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI">
+                                                <Run Text="Utilisé depuis"/> <Run Text="{Binding DaysUsedDisplay}" Foreground="#A855F7" FontWeight="Bold"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="6" HorizontalAlignment="Right">
+                                            <TextBlock Text="Support &amp; Contact" FontSize="10" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextMutedBrush}" FontFamily="Segoe UI" HorizontalAlignment="Right"/>
+                                            <TextBlock FontSize="11" FontWeight="Bold" FontFamily="Segoe UI" HorizontalAlignment="Right">
+                                                <Hyperlink NavigateUri="https://discord.gg/YUKQRUj9Qs"
+                                                           RequestNavigate="DiscordLink_RequestNavigate"
+                                                           Foreground="#A855F7" TextDecorations="None">
+                                                    discord.gg/YUKQRUj9Qs
+                                                </Hyperlink>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <Border Style="{StaticResource SectionCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="6">
+                                            <TextBlock Text="Lancer au démarrage de Windows" FontSize="15" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="EKIPPP se lancera automatiquement avec Windows."
+                                                       FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Command="{Binding ToggleLaunchOnStartupCommand}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Cursor="Hand" BorderThickness="0" Padding="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Width="44" Height="24" CornerRadius="12">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#2A2A45"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding LaunchOnStartup}" Value="True">
+                                                                        <Setter Property="Background">
+                                                                            <Setter.Value>
+                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                                    <GradientStop Color="#7C3AED" Offset="0"/>
+                                                                                    <GradientStop Color="#A855F7" Offset="1"/>
+                                                                                </LinearGradientBrush>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Ellipse Width="18" Height="18" Fill="White" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Margin" Value="3,0,0,0"/>
+                                                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding LaunchOnStartup}" Value="True">
+                                                                            <Setter Property="Margin" Value="0,0,3,0"/>
+                                                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <Border Style="{StaticResource SectionCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <StackPanel helpers:PanelSpacing.Spacing="6">
+                                            <TextBlock Text="Nettoyage automatique au lancement" FontSize="15" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="Segoe UI"/>
+                                            <TextBlock TextWrapping="Wrap" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                                                       Text="Le cache FiveM sera nettoyé automatiquement à chaque démarrage d'EKIPPP (si FiveM est fermé)."/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Command="{Binding ToggleAutoCleanCommand}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Cursor="Hand" BorderThickness="0" Padding="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Width="44" Height="24" CornerRadius="12">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#2A2A45"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AutoCleanOnLaunch}" Value="True">
+                                                                        <Setter Property="Background">
+                                                                            <Setter.Value>
+                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                                    <GradientStop Color="#7C3AED" Offset="0"/>
+                                                                                    <GradientStop Color="#A855F7" Offset="1"/>
+                                                                                </LinearGradientBrush>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Ellipse Width="18" Height="18" Fill="White" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Margin" Value="3,0,0,0"/>
+                                                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AutoCleanOnLaunch}" Value="True">
+                                                                            <Setter Property="Margin" Value="0,0,3,0"/>
+                                                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ══ STATUS BAR ════════════════════════════════════════════ -->
+            <Border Grid.Row="2" BorderBrush="#0E0E22" BorderThickness="0,1,0,0">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#08081A" Offset="0"/>
+                        <GradientStop Color="#07070F" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid Margin="22,0,22,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" helpers:PanelSpacing.Spacing="8">
+                        <!-- Pulsing status dot -->
+                        <Ellipse Width="6" Height="6" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#10B981"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                            <Setter Property="Fill" Value="#F59E0B"/>
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="PulseSB">
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="1" To="0.25" Duration="0:0:0.65"
+                                                                         AutoReverse="True"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <RemoveStoryboard BeginStoryboardName="PulseSB"/>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                    </StackPanel>
+                    <ProgressBar Style="{StaticResource PurpleProgress}"
+                                 Value="{Binding ProgressValue}" Maximum="100"
+                                 Width="160" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

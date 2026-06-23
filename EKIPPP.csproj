@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>EKIPPP</AssemblyName>
+    <RootNamespace>EKIPPP</RootNamespace>
+    <Platforms>x64</Platforms>
+    <ApplicationIcon>Assets\logo.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\logo.png" Condition="Exists('Assets\logo.png')"/>
+    <Content Include="Assets\logo.ico" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Assets\logo.ico')"/>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+bin/
+obj/
+publish/
+publish_fixed/
+publish_sf/
+publish_single/
+*.user
+.vs/
+*.zip
